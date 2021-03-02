@@ -5,7 +5,36 @@
                 <div class="card">
                     <div class="card-header">Comments Section</div>
                     <div class="card-body">
-                        <CommentForm :parent_id="parent_id" />
+                        <form @submit.prevent="submitForm">
+                            <div class="form-group mb-3">
+                                <label for="username">Username</label>
+                                <input
+                                    text="text"
+                                    v-model="username"
+                                    class="form-control"
+                                    :disabled="isLoading"
+                                />
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="body">Body</label>
+                                <textarea
+                                    ref="message"
+                                    rows="5"
+                                    v-model="body"
+                                    class="form-control"
+                                    :disabled="isLoading"
+                                ></textarea>
+                            </div>
+                            <div class="d-flex">
+                                <div class="flex-grow-1"></div>
+                                <button
+                                    class="btn btn-primary"
+                                    :disabled="isLoading"
+                                >
+                                    Post
+                                </button>
+                            </div>
+                        </form>
                         <div class="py-4">
                             <div
                                 class="card mb-3"
@@ -21,6 +50,15 @@
                                     </div>
                                     <div class="text-body">
                                         {{ comment.body }}
+                                        <div
+                                            class="card mb-3"
+                                            v-for="subcomment in comment.comments"
+                                            :key="subcomment.id"
+                                        >
+                                            <div class="card-body">
+                                                {{ subcomment.body }}
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="d-flex">
                                         <div class="flex-grow-1"></div>
@@ -40,16 +78,14 @@
 
 <script>
 import moment from "moment";
-import CommentForm from "./components/CommentForm.vue";
 
 export default {
     name: "App",
-    components: {
-        CommentForm
-    },
     data() {
         return {
-            parent_id: null
+            parent_id: null,
+            username: "",
+            body: ""
         };
     },
     mounted() {
@@ -57,16 +93,24 @@ export default {
     },
     methods: {
         reply(comment) {
-            console.log(comment);
-            const textarea = document.getElementById("message");
+            this.body = "@" + comment.username + " ";
 
-            textarea.value = "@" + comment.username + " ";
-            textarea.focus();
+            this.$refs.message.focus();
 
             this.parent_id = comment.id;
         },
         dateFormat(date) {
             return moment(date).fromNow();
+        },
+        submitForm() {
+            this.$store.dispatch("create", {
+                parent_id: this.parent_id,
+                username: this.username,
+                body: this.body
+            });
+            this.parent_id = null;
+            this.username = "";
+            this.body = "";
         }
     },
     computed: {
